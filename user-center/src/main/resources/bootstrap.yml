@@ -1,0 +1,23 @@
+server:
+  port: 8089
+spring:
+  application:
+    name: user-center-server
+  profiles:
+    active: dev
+  cloud:
+    bootstrap:
+      enabled: true
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: 3f5765d3-1b70-43e3-9da5-67f56e198a69
+      config:
+        server-addr: 127.0.0.1:8848
+        file-extension: yml
+        shared-configs:
+          - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+        namespace: 3f5765d3-1b70-43e3-9da5-67f56e198a69
+    openfeign:
+      circuitbreaker:
+        enabled: true

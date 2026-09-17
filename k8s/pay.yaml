@@ -1,0 +1,54 @@
+# pay-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: pay-svc
+  namespace: my-springcloud
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8085
+      targetPort: 8085
+  selector:
+    app: pay
+---
+# pay-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pay
+  namespace: my-springcloud
+  labels:
+    app: pay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pay
+  template:
+    metadata:
+      labels:
+        app: pay
+    spec:
+      containers:
+        - name: pay
+          image: pay:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_CONFIG_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+            - name: SPRING_CLOUD_NACOS_CONFIG_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"

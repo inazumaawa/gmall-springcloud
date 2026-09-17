@@ -1,0 +1,60 @@
+# gateway-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-svc
+  namespace: my-springcloud
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+      name: http
+  selector:
+    app: gateway
+---
+# gateway-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: my-springcloud
+  labels:
+    app: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: gateway:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_CONFIG_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+            - name: SPRING_CLOUD_NACOS_CONFIG_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+            - name: SPRING_DATA_REDIS_HOST
+              value: "redis-svc"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"

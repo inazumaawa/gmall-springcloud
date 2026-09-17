@@ -1,0 +1,25 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: carts-server
+  profiles:
+    # 环境配置
+    active: dev
+  cloud:
+    bootstrap:
+      enabled: true
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 127.0.0.1:8848
+        namespace: 3f5765d3-1b70-43e3-9da5-67f56e198a69
+      config:
+        # 配置中心地址
+        server-addr: 127.0.0.1:8848
+        # 配置文件格式
+        file-extension: yml
+        # 共享配置
+        shared-configs:
+          - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+        namespace: 3f5765d3-1b70-43e3-9da5-67f56e198a69

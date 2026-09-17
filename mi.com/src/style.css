@@ -1,0 +1,281 @@
+/* ===== 设计 Token（华为 VMALL × 现代轻奢电商）===== */
+:root {
+  /* 华为红主色系 */
+  --c-accent: #CA141C;
+  --c-accent-hover: #B01218;
+  --c-accent-light: #E8474B;
+  --c-accent-soft: #FFF0F1;
+  --c-accent-bg: #FFF5F5;
+
+  /* 中性色 */
+  --c-ground: #FFFFFF;
+  --c-ink: #1A1A1A;
+  --c-ink-soft: #333333;
+  --c-soft: #F5F5F5;
+  --c-soft-alt: #FAFAFA;
+  --c-muted: #8E8E93;
+  --c-muted-light: #C7C7CC;
+  --c-hairline: #E5E5EA;
+
+  /* 功能色 */
+  --c-success: #34C759;
+  --c-success-bg: #E8F8ED;
+  --c-warning: #FF9500;
+  --c-warning-bg: #FFF4E5;
+  --c-danger: #FF3B30;
+  --c-danger-bg: #FFEEED;
+
+  /* 渐变 */
+  --grad-hero: linear-gradient(180deg, #1A1A1A 0%, #3A3A3A 100%);
+  --grad-accent: linear-gradient(135deg, #CA141C 0%, #E8474B 100%);
+  --grad-card: linear-gradient(180deg, #FFFFFF 0%, #FBFBFB 100%);
+
+  /* 间距（8pt grid） */
+  --s-2: 2px;
+  --s-4: 4px;
+  --s-6: 6px;
+  --s-8: 8px;
+  --s-10: 10px;
+  --s-12: 12px;
+  --s-14: 14px;
+  --s-16: 16px;
+  --s-20: 20px;
+  --s-24: 24px;
+  --s-32: 32px;
+  --s-40: 40px;
+  --s-48: 48px;
+  --s-64: 64px;
+  --s-80: 80px;
+  --s-96: 96px;
+
+  /* 圆角 */
+  --r-none: 0;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-full: 9999px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.10);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03);
+
+  /* 动效 */
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 150ms;
+  --dur-normal: 250ms;
+  --dur-slow: 400ms;
+}
+
+/* ===== Reset ===== */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--c-ink);
+  background-color: var(--c-soft);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-wrap: pretty;
+}
+
+li { list-style: none; }
+a { text-decoration: none; color: inherit; }
+
+.clearfix::before,
+.clearfix::after { content: ""; display: table; }
+.clearfix::after { clear: both; }
+
+/* 通用容器 */
+.w {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--s-16);
+}
+
+/* ===== 通用组件 ===== */
+
+/* 主按钮 */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-8);
+  height: 44px;
+  padding: 0 var(--s-24);
+  background: var(--c-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+  letter-spacing: 0.01em;
+}
+.btn-primary:hover { background: var(--c-accent-hover); }
+.btn-primary:disabled { background: var(--c-muted-light); cursor: not-allowed; }
+
+/* 次按钮 */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 var(--s-24);
+  background: var(--c-ground);
+  color: var(--c-ink);
+  border: 1px solid var(--c-hairline);
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.btn-outline:hover { border-color: var(--c-ink); }
+
+/* 描边主色按钮 */
+.btn-outline-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 var(--s-24);
+  background: var(--c-ground);
+  color: var(--c-accent);
+  border: 1px solid var(--c-accent);
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.btn-outline-accent:hover { background: var(--c-accent-soft); }
+
+/* 深色按钮 */
+.btn-dark {
+  height: 44px;
+  padding: 0 var(--s-32);
+  background: var(--c-ink);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.btn-dark:hover { opacity: 0.85; }
+
+/* 加载旋转 */
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--c-hairline);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 输入框 */
+.input-field {
+  width: 100%;
+  height: 44px;
+  padding: 0 var(--s-16);
+  border: 1px solid var(--c-hairline);
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  color: var(--c-ink);
+  background: var(--c-ground);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.input-field:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(202, 20, 28, 0.08);
+}
+.input-field::placeholder { color: var(--c-muted-light); }
+
+/* 节标题体系 */
+.section-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--s-8);
+}
+.section-headline {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--c-ink);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.section-subhead {
+  font-size: 16px;
+  color: var(--c-muted);
+  margin-top: var(--s-8);
+  line-height: 1.5;
+}
+
+/* 页面通用背景 */
+.page-bg {
+  background: var(--c-soft);
+  min-height: calc(100vh - 150px);
+}
+
+/* 通用空状态 */
+.empty-state {
+  text-align: center;
+  padding: var(--s-64) 0;
+  color: var(--c-muted);
+}
+.empty-state p {
+  font-size: 15px;
+  margin-bottom: var(--s-20);
+}
+
+/* 通用加载 */
+.loading-block {
+  text-align: center;
+  color: var(--c-muted);
+  padding: var(--s-64) 0;
+}
+.loading-block .spinner {
+  margin: 0 auto var(--s-12);
+}
+.loading-block p { margin: 0; }
+
+/* 通用badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--r-full);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+  body { font-size: 14px; }
+  .section-headline { font-size: 22px; }
+}

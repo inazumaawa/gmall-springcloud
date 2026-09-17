@@ -1,0 +1,56 @@
+# ai-customer-service-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-customer-service-svc
+  namespace: my-springcloud
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8092
+      targetPort: 8092
+  selector:
+    app: ai-customer-service
+---
+# ai-customer-service-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-customer-service
+  namespace: my-springcloud
+  labels:
+    app: ai-customer-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-customer-service
+  template:
+    metadata:
+      labels:
+        app: ai-customer-service
+    spec:
+      containers:
+        - name: ai-customer-service
+          image: ai-customer-service:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8092
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_CONFIG_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+            - name: SPRING_CLOUD_NACOS_CONFIG_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

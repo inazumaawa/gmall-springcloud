@@ -1,0 +1,143 @@
+# nacos-pv-data.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nacos-pv-data
+  labels:
+    app: nacos
+    type: nfs
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  nfs:
+    server: 192.168.10.16
+    path: /opt/gpmall/nfsdata/nacos/data
+    readOnly: false
+
+# nacos-pv-logs.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nacos-pv-logs
+  labels:
+    app: nacos
+    type: nfs
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  nfs:
+    server: 192.168.10.16
+    path: /opt/gpmall/nfsdata/nacos/logs
+    readOnly: false
+
+
+# nacos-data-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nacos-data-pvc
+  namespace: my-springcloud
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ""
+
+# nacos-logs-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nacos-logs-pvc
+  namespace: my-springcloud
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ""
+
+# nacos-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nacos-server
+  namespace: my-springcloud
+  labels:
+    app: nacos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nacos
+  template:
+    metadata:
+      labels:
+        app: nacos
+    spec:
+      containers:
+        - name: nacos
+          image: registry.cn-hangzhou.aliyuncs.com/ptuxzx202180/nacos-server:v2.1.0
+          ports:
+            - containerPort: 8848
+            - containerPort: 9848
+          env:
+            - name: MODE
+              value: "standalone"
+
+          volumeMounts:
+            - name: nacos-data
+              mountPath: /home/nacos/data
+            - name: nacos-logs
+              mountPath: /home/nacos/logs
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+      volumes:
+        - name: nacos-data
+          persistentVolumeClaim:
+            claimName: nacos-data-pvc  
+        - name: nacos-logs
+          persistentVolumeClaim:
+            claimName: nacos-logs-pvc  
+
+# nacos-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nacos-svc
+  namespace: my-springcloud
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 8848
+      targetPort: 8848
+      nodePort: 30848
+    - name: grpc
+      port: 9848
+      targetPort: 9848
+      nodePort: 30948  # 必须指定，否则微服务无法注册到Nacos
+  selector:
+    app: nacos
+
+
+
+
+nacos命名空间：494ba071-c625-44c7-94c9-5a4ee408f573

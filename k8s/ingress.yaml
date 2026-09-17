@@ -1,0 +1,31 @@
+# ============================================================
+# Ingress 配置（基于 Nginx Ingress Controller）
+# Master 节点 IP: 192.168.10.16
+# 访问方式: http://ptu-mall.local  -> 前端 (frontend-svc:80)
+# 前端 Nginx 内部将 API 请求代理到 gateway-svc:8080
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ptu-mall-ingress
+  namespace: my-springcloud
+  annotations:
+    # 允许上传大文件（如图片）
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    # 超时配置（AI 对话可能较慢）
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  ingressClassName: nginx
+  rules:
+    # 入口指向前端，前端 Nginx 内部代理 API 到 gateway
+    - host: ptu-mall.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-svc
+                port:
+                  number: 80

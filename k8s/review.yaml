@@ -1,0 +1,54 @@
+# review-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: review-svc
+  namespace: my-springcloud
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8088
+      targetPort: 8088
+  selector:
+    app: review
+---
+# review-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review
+  namespace: my-springcloud
+  labels:
+    app: review
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: review
+  template:
+    metadata:
+      labels:
+        app: review
+    spec:
+      containers:
+        - name: review
+          image: review:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8088
+          env:
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_CONFIG_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+            - name: SPRING_CLOUD_NACOS_CONFIG_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"

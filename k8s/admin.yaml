@@ -1,0 +1,54 @@
+# admin-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-svc
+  namespace: my-springcloud
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8090
+      targetPort: 8090
+  selector:
+    app: admin
+---
+# admin-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin
+  namespace: my-springcloud
+  labels:
+    app: admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin
+  template:
+    metadata:
+      labels:
+        app: admin
+    spec:
+      containers:
+        - name: admin
+          image: admin:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8090
+          env:
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_CONFIG_SERVERADDR
+              value: "nacos-svc.my-springcloud:8848"
+            - name: SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+            - name: SPRING_CLOUD_NACOS_CONFIG_NAMESPACE
+              value: "494ba071-c625-44c7-94c9-5a4ee408f573"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
