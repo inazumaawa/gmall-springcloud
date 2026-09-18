@@ -2,6 +2,7 @@ package order.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import model.Cart;
+import model.LogisticsTrack;
 import model.Order;
 import model.OrderItem;
 import model.Result;
@@ -86,6 +87,19 @@ public class OrderServiceImpl implements OrderService {
         }
         // 从购物车中移除已下单的商品
         cartServiceFeignClient.deleteCartlist(uid, cartIds);
+        // 生成初始物流轨迹节点（失败不阻塞下单）
+        try {
+            LogisticsTrack track = new LogisticsTrack();
+            track.setOrderId(order.getId());
+            track.setAddressId(aid);
+            track.setStatus("已下单");
+            track.setLocation("商家仓库");
+            track.setDescription("订单已创建，等待商家发货");
+            track.setTrackTime(new Date());
+            addressServiceFeignClient.addLogisticsTrack(track);
+        } catch (Exception e) {
+            // 忽略物流节点写入异常，保证下单流程正常
+        }
         return Result.success(order);
     }
 
