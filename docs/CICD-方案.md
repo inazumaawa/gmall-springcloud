@@ -42,7 +42,7 @@ GitHub 官方支持列表里 Linux 最低是 **CentOS 8 / RHEL 8**，CentOS 7 �
 │  └───────────┬────────────┘                               ▼           │
 │              │ kubectl apply                     ┌──────────────────┐ │
 │              └─────────────────────────────────► │ K8s my-springcloud│ │
-│                                                   │ 14 个微服务+前端 │ │
+│                                                   │ 15 个微服务+前端 │ │
 │                                                   │ Nacos/Redis/MySQL│ │
 │                                                   └──────────────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
@@ -67,8 +67,8 @@ GitHub 官方支持列表里 Linux 最低是 **CentOS 8 / RHEL 8**，CentOS 7 �
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
 | 代码仓库     | `git@github.com:inazumaawa/gmall-springcloud.git`，分支 `main`，首次提交 `885b4d0`                                |
 | 构建         | 根`pom.xml` 聚合 16 个模块（`common` 为依赖库，不单独出镜像）                                                       |
-| Dockerfile   | 14 个 Java 服务各有独立 Dockerfile（`eclipse-temurin:17-jdk-alpine`）+ 前端 `mi.com/Dockerfile`（`nginx:alpine`） |
-| K8s 清单     | `k8s/*.yaml` 共 15 个（14 服务 + frontend）+ `ingress.yaml`                                                         |
+| Dockerfile   | 15 个 Java 服务各有独立 Dockerfile（`eclipse-temurin:17-jdk-alpine`）+ 前端 `mi.com/Dockerfile`（`nginx:alpine`） |
+| K8s 清单     | `k8s/*.yaml` 共 16 个（15 服务 + frontend）+ `ingress.yaml`                                                         |
 | 基础组件     | Nacos / Redis / MySQL / OBS 已部署在`my-springcloud`                                                                  |
 | 内网端口约定 | gateway`30080`、frontend `30088`、nacos `30848/30948`                                                             |
 
@@ -90,19 +90,42 @@ GitHub 官方支持列表里 Linux 最低是 **CentOS 8 / RHEL 8**，CentOS 7 �
 | coupon              | `coupon`              | `coupon-1.0-SNAPSHOT.jar`              | 8091     | coupon              |
 | ai-customer-service | `ai_customer_service` | `ai_customer_service-1.0-SNAPSHOT.jar` | 8092     | ai-customer-service |
 | obs                 | `obs`                 | `obs-1.0-SNAPSHOT.jar`                 | 8093     | obs                 |
+| customer-ws         | `customer_ws`         | `customer_ws-1.0-SNAPSHOT.jar`         | 8094     | customer-ws         |
 | frontend            | `mi.com`              | `dist/`（Vite 构建产物）               | 80       | frontend            |
 
 > 注意：模块目录首字母大写的 `Goods`，其 jar 名也是 `Goods-1.0-SNAPSHOT.jar`；镜像名统一小写 `goods`，与 K8s 清单保持一致。
 
 ### 2.3 缺口（实施前需补齐）
 
-| # | 缺口                                                              | 影响                                                         | 处理建议                                                                                                      |
-| - | ----------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| 1 | `customer_ws` 模块**没有 Dockerfile，也没有 k8s 清单**    | WebSocket 客服功能无法部署                                   | 参照`gateway/Dockerfile` 补一个，端口按 `bootstrap.yml` 配置补 `k8s/customer-ws.yaml`，并加入流水线矩阵 |
-| 2 | `nacos_config/`、`nacos_config-k8s/` 已被 `.gitignore` 排除 | 新集群无法从仓库还原配置                                     | 配置只存在 Nacos 服务端；重建集群时从 Nacos 控制台导出/导入，或改用 Nacos OpenAPI 脚本化                      |
-| 3 | `k8s/*.md`（mysql/nacos/redis）混在清单目录                     | `kubectl apply -f k8s/` 可能报 `no recognized extension` | 移到`docs/` 或 `k8s/ops/`                                                                                 |
-| 4 | 老脚本`k8s/build-images.sh` 指向阿里云镜像仓库                  | 与 Harbor 方案冲突                                           | 改造为 Harbor 版本，或在文档中废弃                                                                            |
-| 5 | 各服务`bootstrap.yml` 依赖环境变量注入 Nacos 地址               | 本地与集群行为不一致                                         | 集群已在 Deployment 的`env` 里注入，保持现状即可                                                            |
+| # | 缺口                                                              | 影响                                                         | 处理建议                                                                                                                                                         |
+| - | ----------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | `customer_ws` 模块**没有 Dockerfile，也没有 k8s 清单**    | WebSocket 客服功能无法部署                                   | **已处理**：补 `customer_ws/Dockerfile`（端口 8094）、`k8s/customer-ws.yaml`、`nacos_config-k8s/customer-ws-server-dev.yml`，k8s 版 `gateway-dev.yml` 增加 `/chat/**`、`/ws/**` 路由，并加入流水线矩阵 |
+| 2 | `nacos_config/`、`nacos_config-k8s/` 已被 `.gitignore` 排除 | 新集群无法从仓库还原配置                                     | **不纳入 CI/CD 自动同步**（见 2.4 说明）；保持 gitignore（含明文 MySQL 密码 / SMTP 授权码 / API Key / 支付宝私钥），配置变更走人工导入或手动触发的独立 Job |
+| 3 | `k8s/*.md`（mysql/nacos/redis）混在清单目录                     | `kubectl apply -f k8s/` 可能报 `no recognized extension` | **已处理**：转成合法多文档 YAML（补 `---`）并移入 `k8s/infra/`，见 8.3；`k8s/` 只保留业务清单                                                        |
+| 4 | 老脚本`k8s/build-images.sh` 指向阿里云镜像仓库                  | 与 Harbor 方案冲突                                           | **已处理**：确认废弃，直接删除（功能由 Jenkinsfile 的 build/push 阶段替代）                                                                                |
+| 5 | 各服务`bootstrap.yml` 依赖环境变量注入 Nacos 地址               | 本地与集群行为不一致                                         | 集群已在 Deployment 的`env` 里注入，保持现状即可                                                                                                               |
+
+### 2.4 关于 Nacos 配置是否纳入 CI/CD（结论：不自动同步）
+
+`nacos_config/`（本地）与 `nacos_config-k8s/`（集群）是同一批配置的两份导出副本，**服务端 Nacos 才是唯一事实来源**。流水线不推送配置，理由三条：
+
+| 理由                           | 说明                                                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| 配置是运行时状态，不是构建产物 | 每次代码 push 都回写配置，会把运维在 Nacos 控制台上的调整覆盖掉，属于高危操作                                                  |
+| 变更频率与评审方式不同         | 配置改动少、需人工确认；代码提交频繁、可自动执行，两者不应共用一条流水线                                                       |
+| 密钥不能进仓库                 | 这些 yml 含明文 MySQL 密码 / SMTP 授权码 / 百炼 API Key / 支付宝私钥，`.gitignore` 已排除，若纳入 CI/CD 就必须入库，不可接受 |
+
+**什么时候需要人工导入**：只在新集群重建、或新增了服务的 dataId 时。做法是登录 Nacos 控制台（`30848`）用「导入配置」逐份上传 `nacos_config-k8s/*.yml`；若想脚本化，可用 Nacos OpenAPI 写一个**手动触发**的独立 Job（不要挂在 push 触发的流水线上）：
+
+```bash
+curl -X POST 'http://<nacos-svc>:8848/nacos/v1/cs/configs' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'dataId=gateway-dev.yml' -d 'group=DEFAULT_GROUP' -d 'type=yaml' \
+  -d 'username=<nacos账号>' -d 'password=<nacos密码>' \
+  --data-urlencode 'content@gateway-dev.yml'
+```
+
+> 关于 `customer_ws`：k8s 侧缺的 `customer-ws-server-dev.yml` 已补到 `nacos_config-k8s/`，同时 k8s 版 `gateway-dev.yml` 也补上了 `/chat/**`、`/ws/**` 两条路由与 `/ws/**` 白名单。**新集群重建时这两份要一起导入**，否则网关会返回 404。
 
 ---
 
@@ -547,7 +570,9 @@ chown -R jenkins:jenkins /var/lib/jenkins/.m2
 
 ## 7. 阶段五：Jenkinsfile 全文
 
-文件位置：仓库根目录 `Jenkinsfile`（任务里的 Script Path 指的就是它）。
+文件位置：仓库根目录 [Jenkinsfile](../Jenkinsfile)（任务里的 Script Path 指的就是它），已随本次改动落库。
+
+> 下面的全文与仓库中的 `Jenkinsfile` 保持一致；若两者冲突，**以仓库中的文件为准**。
 
 ```groovy
 pipeline {
@@ -567,7 +592,7 @@ pipeline {
         JAVA_HOME       = '/opt/jdk/current'
         MAVEN_HOME      = '/opt/maven'
         PATH            = '/opt/jdk/current/bin:/opt/maven/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin'
-        SERVICES        = 'gateway auth goods carts order pay address favorites review user-center admin coupon ai-customer-service obs frontend'
+        SERVICES        = 'gateway auth goods carts order pay address favorites review user-center admin coupon ai-customer-service obs customer-ws frontend'
     }
 
     triggers {
@@ -638,6 +663,7 @@ pipeline {
                       "coupon:coupon:coupon-1.0-SNAPSHOT.jar"
                       "ai-customer-service:ai_customer_service:ai_customer_service-1.0-SNAPSHOT.jar"
                       "obs:obs:obs-1.0-SNAPSHOT.jar"
+                      "customer-ws:customer_ws:customer_ws-1.0-SNAPSHOT.jar"
                     )
                     for s in "${services[@]}"; do
                       IFS=: read -r name module jar <<< "$s"
@@ -708,9 +734,11 @@ pipeline {
 
 ## 8. 阶段六：K8s 清单改造
 
-对 `k8s/` 下 **15 个 yaml** 统一做三处修改。
+对 `k8s/` 下 **15 个业务服务 + frontend** 的 yaml 统一做两处修改（`ingress.yaml` 无镜像，跳过）。
 
-### 8.1 镜像地址指向 Harbor
+### 8.1 镜像地址指向 Harbor（已完成）
+
+16 个业务清单（15 服务 + frontend）已**直接改好**，无需在 Master 节点上跑 sed：
 
 ```yaml
 # 改前
@@ -722,32 +750,18 @@ pipeline {
           imagePullPolicy: Always
 ```
 
-批量替换（在仓库根目录执行，注意 `Goods`→`goods`、`ai_customer_service`→`ai-customer-service` 命名差异）：
+命名差异已处理：`Goods`→`goods`、`ai_customer_service`→`ai-customer-service`、`customer_ws`→`customer-ws`、`mi-frontend`→`frontend`。
+
+自检命令（任意机器均可执行，用来确认没有漏改）：
 
 ```bash
-sed -i 's#image: gateway:1.0#image: 192.168.10.16:9090/gmall/gateway:latest#'   k8s/gateway.yaml
-sed -i 's#image: auth:1.0#image: 192.168.10.16:9090/gmall/auth:latest#'         k8s/auth.yaml
-sed -i 's#image: goods:1.0#image: 192.168.10.16:9090/gmall/goods:latest#'       k8s/goods.yaml
-sed -i 's#image: carts:1.0#image: 192.168.10.16:9090/gmall/carts:latest#'       k8s/carts.yaml
-sed -i 's#image: order:1.0#image: 192.168.10.16:9090/gmall/order:latest#'       k8s/order.yaml
-sed -i 's#image: pay:1.0#image: 192.168.10.16:9090/gmall/pay:latest#'           k8s/pay.yaml
-sed -i 's#image: address:1.0#image: 192.168.10.16:9090/gmall/address:latest#'   k8s/address.yaml
-sed -i 's#image: favorites:1.0#image: 192.168.10.16:9090/gmall/favorites:latest#' k8s/favorites.yaml
-sed -i 's#image: review:1.0#image: 192.168.10.16:9090/gmall/review:latest#'     k8s/review.yaml
-sed -i 's#image: user-center:1.0#image: 192.168.10.16:9090/gmall/user-center:latest#' k8s/user-center.yaml
-sed -i 's#image: admin:1.0#image: 192.168.10.16:9090/gmall/admin:latest#'       k8s/admin.yaml
-sed -i 's#image: coupon:1.0#image: 192.168.10.16:9090/gmall/coupon:latest#'     k8s/coupon.yaml
-sed -i 's#image: ai-customer-service:1.0#image: 192.168.10.16:9090/gmall/ai-customer-service:latest#' k8s/ai-customer-service.yaml
-sed -i 's#image: obs:1.0#image: 192.168.10.16:9090/gmall/obs:latest#'           k8s/obs.yaml
-sed -i 's#image: mi-frontend:1.0#image: 192.168.10.16:9090/gmall/frontend:latest#' k8s/frontend.yaml
-
-# 统一拉取策略
-sed -i 's#imagePullPolicy: IfNotPresent#imagePullPolicy: Always#' k8s/*.yaml
+grep -rn "image:" k8s/*.yaml | grep -v "192.168.10.16:9090"   # 期望：无输出
+grep -rn "IfNotPresent" k8s/*.yaml                            # 期望：无输出（k8s/infra/ 除外）
 ```
 
-### 8.2 补 `imagePullSecrets`
+### 8.2 补 `imagePullSecrets`（已完成）
 
-每个 Deployment 的 `spec.template.spec` 下加两行（缩进与 `containers` 同级）：
+16 个 Deployment 的 `spec.template.spec` 下已加上（缩进与 `containers` 同级）：
 
 ```yaml
     spec:
@@ -758,14 +772,26 @@ sed -i 's#imagePullPolicy: IfNotPresent#imagePullPolicy: Always#' k8s/*.yaml
           ...
 ```
 
-### 8.3 清理清单目录
+> 该 Secret 需先在集群里创建（第 3 章「集群侧拉取凭据」）：`kubectl -n my-springcloud create secret docker-registry harbor-cred ...`
+
+### 8.3 清单目录结构（已完成）
+
+| 路径                 | 内容                                      | 参与流水线`kubectl apply` |
+| -------------------- | ----------------------------------------- | --------------------------- |
+| `k8s/*.yaml`       | 15 个业务服务（含 `customer-ws`）+`frontend` + `ingress` | ✅ 是                       |
+| `k8s/infra/*.yaml` | mysql / nacos / redis 基础组件清单        | ❌ 否，仅手动重建时使用     |
+
+基础组件**不纳入 CI/CD**，三条理由：它们没有源码模块与 Dockerfile（用的是第三方镜像）；它们是有状态服务、数据在 NFS 上；每次构建都 apply 一遍没有收益，只有连带重启的风险。
+
+需要重建基础组件时手动执行：
 
 ```bash
-mkdir -p docs
-git mv k8s/mysql.md k8s/nacos.md k8s/redis.md docs/
+kubectl apply -f k8s/infra/mysql.yaml
+kubectl apply -f k8s/infra/nacos.yaml
+kubectl apply -f k8s/infra/redis.yaml
 ```
 
-否则 `kubectl apply -f k8s/` 会因非 YAML 文件报错。
+`k8s/infra/` 是子目录，而 `kubectl apply -f k8s/` **默认不递归子目录**，所以基础组件不会被流水线扫到。若想彻底不依赖该行为，可把流水线命令写成显式的 `kubectl apply -f k8s/*.yaml`。
 
 ---
 
@@ -782,7 +808,7 @@ git mv k8s/mysql.md k8s/nacos.md k8s/redis.md docs/
 | 5  | 拉代码成功         | 任务页**立即构建**，看 *准备* 阶段日志                      | 无`Permission denied (publickey)`          |
 | 6  | 流水线全绿         | 同上，观察 6 个 stage                                               | 全部成功（`Finished: SUCCESS`）            |
 | 7  | 轮询生效           | push 一次代码，等 5 分钟内                                          | 自动出现新的构建记录                         |
-| 8  | 镜像已入库         | Harbor 控制台 →`gmall` 项目                                      | 15 个仓库，tag 含本次`<sha>` 与 `latest` |
+| 8  | 镜像已入库         | Harbor 控制台 →`gmall` 项目                                      | 16 个仓库（15 服务 + frontend），tag 含本次`<sha>` 与 `latest` |
 | 9  | 业务可用           | 浏览器`http://192.168.10.16:30088`                                | 前端页面正常加载，接口有数据                 |
 | 10 | 网关直连           | `curl http://192.168.10.16:30080/goods/list`                      | 返回 JSON 商品列表                           |
 
@@ -856,9 +882,9 @@ kubectl -n my-springcloud exec -it deploy/gateway -- sh
 
 按性价比排序，前两项建议尽早做。
 
-1. **补 `customer_ws` 的流水线**（当前是缺口）：该模块既无 Dockerfile 也无 K8s 清单。需先确认它是 WebSocket 服务还是被其他模块内嵌的库——若是库，则从 `SERVICES` 列表里移除即可，无需出镜像。
+1. **~~补 `customer_ws` 的流水线~~（已完成）**：`customer_ws/Dockerfile`、`k8s/customer-ws.yaml`、`nacos_config-k8s/customer-ws-server-dev.yml`、k8s 版网关路由均已补齐，模块已进流水线矩阵。
 2. **Maven 本地仓库持久化 + 并行构建**：把 `~/.m2` 挂到固定目录避免每次全量下载；多模块可加 `-T 1C` 并行编译，缩短反馈时间。
 3. **GitOps 化（ArgoCD）**：把部署阶段从 Jenkins 中拆出，Jenkins 只负责构建推镜像并更新清单仓库，ArgoCD 监听清单仓库做实际部署。好处是部署状态可审计、可一键回滚到任意 commit。
 4. **配置即代码**：`Jenkinsfile` 已在仓库里，可再进一步——把 Jenkins 的 Job 也用 JCasC（Jenkins Configuration as Code）和 Job DSL 描述，机器重建后一条命令恢复。
 5. **镜像瘦身**：运行镜像从 `eclipse-temurin:17-jdk-alpine` 换成 `17-jre-alpine`，单镜像可省 100MB+；配合多阶段构建效果更明显。
-6. **流水线分阶段加速**：把"构建镜像"拆成并行分支（`parallel`），15 个服务串行构建的耗时能压到 1/3 左右。
+6. **流水线分阶段加速**：把"构建镜像"拆成并行分支（`parallel`），16 个服务串行构建的耗时能压到 1/3 左右。

@@ -30,10 +30,12 @@ spec:
       labels:
         app: review
     spec:
+      imagePullSecrets:
+        - name: harbor-cred
       containers:
         - name: review
-          image: review:1.0
-          imagePullPolicy: IfNotPresent
+          image: 192.168.10.16:9090/gmall/review:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8088
           env:

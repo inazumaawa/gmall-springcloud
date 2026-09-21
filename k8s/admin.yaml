@@ -30,10 +30,12 @@ spec:
       labels:
         app: admin
     spec:
+      imagePullSecrets:
+        - name: harbor-cred
       containers:
         - name: admin
-          image: admin:1.0
-          imagePullPolicy: IfNotPresent
+          image: 192.168.10.16:9090/gmall/admin:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8090
           env:

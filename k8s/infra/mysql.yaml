@@ -1,3 +1,8 @@
+# ============================================================
+# MySQL —— 基础组件，不纳入 CI/CD 流水线（无源码、无 Dockerfile，属运维动作）
+# 数据位置：NFS 192.168.10.16:/opt/gpmall/nfsdata/mysql（Retain，删 Pod 不丢数据）
+# 手动重建：kubectl apply -f k8s/infra/mysql.yaml
+# ============================================================
 # mysql-pv.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -14,6 +19,7 @@ spec:
     path: /opt/gpmall/nfsdata/mysql
     server: 192.168.10.16
 
+---
 # mysql-pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -28,6 +34,7 @@ spec:
       storage: 1Gi
   storageClassName: nfs
 
+---
 # mysql-svc.yaml
 apiVersion: v1
 kind: Service
@@ -43,6 +50,7 @@ spec:
   selector:
     app: mysql
 
+---
 # mysql-development.yaml
 apiVersion: apps/v1
 kind: Deployment

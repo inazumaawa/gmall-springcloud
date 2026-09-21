@@ -1,3 +1,11 @@
+# ============================================================
+# Nacos —— 基础组件，不纳入 CI/CD 流水线
+# 数据位置：NFS 192.168.10.16:/opt/gpmall/nfsdata/nacos/{data,logs}（Retain）
+# 手动重建：kubectl apply -f k8s/infra/nacos.yaml
+#
+# 备注：Nacos 命名空间 ID = 494ba071-c625-44c7-94c9-5a4ee408f573
+#       （微服务 bootstrap.yml 里的 namespace 需与此一致）
+# ============================================================
 # nacos-pv-data.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -19,6 +27,7 @@ spec:
     path: /opt/gpmall/nfsdata/nacos/data
     readOnly: false
 
+---
 # nacos-pv-logs.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -40,7 +49,7 @@ spec:
     path: /opt/gpmall/nfsdata/nacos/logs
     readOnly: false
 
-
+---
 # nacos-data-pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -55,6 +64,7 @@ spec:
       storage: 1Gi
   storageClassName: ""
 
+---
 # nacos-logs-pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -69,6 +79,7 @@ spec:
       storage: 1Gi
   storageClassName: ""
 
+---
 # nacos-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -96,7 +107,6 @@ spec:
           env:
             - name: MODE
               value: "standalone"
-
           volumeMounts:
             - name: nacos-data
               mountPath: /home/nacos/data
@@ -112,11 +122,12 @@ spec:
       volumes:
         - name: nacos-data
           persistentVolumeClaim:
-            claimName: nacos-data-pvc  
+            claimName: nacos-data-pvc
         - name: nacos-logs
           persistentVolumeClaim:
-            claimName: nacos-logs-pvc  
+            claimName: nacos-logs-pvc
 
+---
 # nacos-svc.yaml
 apiVersion: v1
 kind: Service
@@ -136,8 +147,3 @@ spec:
       nodePort: 30948  # 必须指定，否则微服务无法注册到Nacos
   selector:
     app: nacos
-
-
-
-
-nacos命名空间：494ba071-c625-44c7-94c9-5a4ee408f573

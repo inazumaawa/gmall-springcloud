@@ -11,7 +11,7 @@ spec:
       targetPort: 8084
   selector:
     app: order
-
+---
 # order-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -30,10 +30,12 @@ spec:
       labels:
         app: order
     spec:
+      imagePullSecrets:
+        - name: harbor-cred
       containers:
         - name: order
-          image: order:1.0
-          imagePullPolicy: IfNotPresent
+          image: 192.168.10.16:9090/gmall/order:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8084
           env:

@@ -32,10 +32,12 @@ spec:
       labels:
         app: gateway
     spec:
+      imagePullSecrets:
+        - name: harbor-cred
       containers:
         - name: gateway
-          image: gateway:1.0
-          imagePullPolicy: IfNotPresent
+          image: 192.168.10.16:9090/gmall/gateway:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

@@ -1,43 +1,43 @@
-# favorites-svc.yaml
+# customer-ws-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: favorites-svc
+  name: customer-ws-svc
   namespace: my-springcloud
 spec:
   type: ClusterIP
   ports:
-    - port: 8087
-      targetPort: 8087
+    - port: 8094
+      targetPort: 8094
   selector:
-    app: favorites
+    app: customer-ws
 ---
-# favorites-deployment.yaml
+# customer-ws-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: favorites
+  name: customer-ws
   namespace: my-springcloud
   labels:
-    app: favorites
+    app: customer-ws
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: favorites
+      app: customer-ws
   template:
     metadata:
       labels:
-        app: favorites
+        app: customer-ws
     spec:
       imagePullSecrets:
         - name: harbor-cred
       containers:
-        - name: favorites
-          image: 192.168.10.16:9090/gmall/favorites:latest
+        - name: customer-ws
+          image: 192.168.10.16:9090/gmall/customer-ws:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 8087
+            - containerPort: 8094
           env:
             - name: SPRING_CLOUD_NACOS_DISCOVERY_SERVERADDR
               value: "nacos-svc.my-springcloud:8848"
@@ -49,8 +49,8 @@ spec:
               value: "494ba071-c625-44c7-94c9-5a4ee408f573"
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
               memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
               cpu: "500m"

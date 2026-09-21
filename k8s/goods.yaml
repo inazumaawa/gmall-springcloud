@@ -30,10 +30,12 @@ spec:
       labels:
         app: goods
     spec:
+      imagePullSecrets:
+        - name: harbor-cred
       containers:
         - name: goods
-          image: goods:1.0
-          imagePullPolicy: IfNotPresent
+          image: 192.168.10.16:9090/gmall/goods:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8082
           env:

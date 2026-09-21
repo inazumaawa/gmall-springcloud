@@ -30,10 +30,12 @@ spec:
       labels:
         app: user-center
     spec:
+      imagePullSecrets:
+        - name: harbor-cred
       containers:
         - name: user-center
-          image: user-center:1.0
-          imagePullPolicy: IfNotPresent
+          image: 192.168.10.16:9090/gmall/user-center:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8089
           env:

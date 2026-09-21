@@ -1,3 +1,7 @@
+# ============================================================
+# Redis —— 基础组件，不纳入 CI/CD 流水线
+# 手动重建：kubectl apply -f k8s/infra/redis.yaml
+# ============================================================
 # redis-svc.yaml
 apiVersion: v1
 kind: Service
@@ -14,8 +18,7 @@ spec:
   selector:
     app: redis
 
-
-
+---
 # redis-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment

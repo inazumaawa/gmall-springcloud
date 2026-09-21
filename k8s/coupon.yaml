@@ -30,10 +30,12 @@ spec:
       labels:
         app: coupon
     spec:
+      imagePullSecrets:
+        - name: harbor-cred
       containers:
         - name: coupon
-          image: coupon:1.0
-          imagePullPolicy: IfNotPresent
+          image: 192.168.10.16:9090/gmall/coupon:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8091
           env:

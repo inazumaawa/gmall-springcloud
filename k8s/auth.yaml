@@ -30,10 +30,12 @@ spec:
       labels:
         app: auth
     spec:
+      imagePullSecrets:
+        - name: harbor-cred
       containers:
         - name: auth
-          image: auth:1.0
-          imagePullPolicy: IfNotPresent
+          image: 192.168.10.16:9090/gmall/auth:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8081
           env:
