@@ -58,13 +58,17 @@ pipeline {
         stage('构建前端产物') {
             steps {
                 // CentOS 7 的 glibc 2.17 跑不了 Node 20，用容器构建，产物落回工作区
+                // 另把 npm 缓存挂到工作区：容器带 --rm，缓存若留在容器内会随容器销毁，
+                // 导致每次构建都重新下载整个依赖树（走代理时极慢）
                 sh '''#!/bin/bash
                     set -e
+                    mkdir -p "$WORKSPACE/.npm-cache"
                     docker run --rm \
                       -v "$WORKSPACE/mi.com":/app:z \
+                      -v "$WORKSPACE/.npm-cache":/root/.npm:z \
                       -w /app \
                       node:20-bullseye-slim \
-                      sh -c "npm ci && npm run build"
+                      sh -c "npm ci --prefer-offline && npm run build"
                     ls -l "$WORKSPACE/mi.com/dist" | head
                 '''
             }

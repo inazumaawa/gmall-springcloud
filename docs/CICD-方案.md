@@ -621,13 +621,17 @@ pipeline {
         stage('构建前端产物') {
             steps {
                 // CentOS 7 的 glibc 2.17 跑不了 Node 20，用容器构建，产物落回工作区
+                // 另把 npm 缓存挂到工作区：容器带 --rm，缓存若留在容器内会随容器销毁，
+                // 导致每次构建都重新下载整个依赖树（走代理时极慢）
                 sh '''#!/bin/bash
                     set -e
+                    mkdir -p "$WORKSPACE/.npm-cache"
                     docker run --rm \
                       -v "$WORKSPACE/mi.com":/app:z \
+                      -v "$WORKSPACE/.npm-cache":/root/.npm:z \
                       -w /app \
                       node:20-bullseye-slim \
-                      sh -c "npm ci && npm run build"
+                      sh -c "npm ci --prefer-offline && npm run build"
                     ls -l "$WORKSPACE/mi.com/dist" | head
                 '''
             }
@@ -727,6 +731,7 @@ pipeline {
   优点是无占位符、可手动 `kubectl apply -f k8s/`、每次部署只滚动一次。
   代价是集群里运行的镜像不经 SHA 固定；精确回滚请用 Harbor 中的历史 `<sha>` 标签手动 `kubectl set image`。
 - **前端为什么用容器构建**：CentOS 7 的 glibc 2.17 跑不了 Node 20（官方二进制按 glibc 2.28 构建），所以在 `node:20-bullseye-slim` 容器里执行 `npm ci && npm run build`，产物通过挂载写回工作区。若 `npm ci` 因 lockfile 平台差异报 `@rollup/rollup-linux-x64-gnu` / esbuild 平台包缺失，改用 `npm install`，或在容器内重新生成 `package-lock.json` 后提交。
+- **npm 缓存为什么要挂出来**：容器带 `--rm`，npm 的下载缓存默认落在容器内 `/root/.npm`，会随容器一起销毁，于是每次构建都要把整个依赖树重下一遍（走代理隧道时尤其慢）。把 `$WORKSPACE/.npm-cache` 挂到 `/root/.npm` 后缓存跨构建保留，配合 `--prefer-offline` 只在缓存缺失时才联网。工作区不会被清理（流水线未使用 `cleanWs()`，`mvn clean` 也只清 `target/`），缓存可长期复用。
 - **`-v ...:z`**：CentOS 7 默认 SELinux Enforcing 时，绑定挂载需要 `:z` 重打标签，否则容器内读不到工作区文件。
 - **若要改为 SHA 固定**：清单中把 tag 写成占位符 `__IMAGE_TAG__`，流水线增加 `sed "s/__IMAGE_TAG__/$IMAGE_TAG/g"` 渲染到临时目录后再 `apply`，同时把 `imagePullPolicy` 改为 `IfNotPresent`。
 
@@ -856,7 +861,7 @@ kubectl -n my-springcloud get deploy gateway \
 | `mvn` 报 `JAVA_HOME not found`                         | systemd 单元没设环境变量              | `systemctl show jenkins -p Environment`，对照 4.4 节                                                             |
 | Maven 下载依赖卡死                                         | 走官方源，外网慢                      | 确认`~/.m2/settings.xml` 已按 4.7 节换成阿里云镜像                                                               |
 | 前端 stage 报`npm ci` 失败                               | `package-lock.json` 缺失            | 降级为`npm install`，或在开发机补 lock 文件后提交                                                                |
-| `docker login` 报 x509                                   | 未把 Harbor 加进 insecure 列表        | 检查`/etc/docker/daemon.json` 后 `systemctl restart docker`                                                    |
+| `docker login` 报 x509 或 `server gave HTTP response to HTTPS client` | 未把 Harbor 加进 insecure 列表（改端口后条目必须带 `:9090`） | 检查 `/etc/docker/daemon.json` 的 `insecure-registries` 后 `systemctl restart docker` |
 | `docker push` 报 401/403                                 | 机器人账号无 push 权限                | Harbor → 项目`gmall` → 成员，确认 `robot$gmall+ci` 是 **开发者** 及以上                                |
 | Pod 一直`ImagePullBackOff`                               | 缺`imagePullSecrets`                | `kubectl -n my-springcloud describe pod <pod>`，看 Events；对照 8.2 节                                           |
 | Pod`CrashLoopBackOff`                                    | 应用自身起不来，与 CI 无关            | `kubectl -n my-springcloud logs <pod> --previous`                                                                |
